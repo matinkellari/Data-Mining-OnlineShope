@@ -16,567 +16,209 @@
 
 ---
 
-## 📌 Project Overview
+### تحلیل رفتار مشتریان، کشف الگوهای خرید و شناسایی مشتریان در معرض ریزش
 
-Customer churn is one of the most important challenges in e-commerce. Customers may gradually reduce their purchases, become less active, or stop buying altogether without providing any explicit warning.
+<div dir="rtl">
 
-For an online store, losing an existing customer can mean losing future revenue and wasting previous investments in customer acquisition.
+## 📌 معرفی پروژه
 
-The goal of this project is to develop a data-driven system that analyzes historical purchasing behavior, identifies early warning signs of customer churn, and predicts which customers are most likely to stop purchasing.
+در این پروژه، رفتار مشتریان یک فروشگاه آنلاین بین‌المللی با استفاده از تکنیک‌های داده‌کاوی بررسی می‌شود. هدف اصلی، کشف الگوهای رفتاری مشتریان و تقسیم آن‌ها به گروه‌هایی با ویژگی‌های مشابه است تا بتوان برای هر گروه راهبرد مناسب‌تری طراحی کرد.
 
-Instead of simply analyzing past sales, this project aims to transform raw transaction records into customer-level behavioral features, a classification model, and a risk-based customer prioritization system that can support retention decisions.
+در کنار خوشه‌بندی، از مدل‌های پیش‌بینی نیز برای شناسایی مشتریانی که احتمال دارد در آینده خرید خود را متوقف کنند استفاده می‌شود.
 
-> **Core mission:** Identify customers who are approaching churn before their inactivity becomes a long-term business problem.
+**تمرکز اصلی پروژه بر Clustering است و Classification به‌عنوان روشی مکمل به کار می‌رود.**
 
-## 🎯 Business Problem
+## 🎯 اهداف پروژه
 
-The business currently has access to historical transaction data, but it does not have a reliable, directly provided churn label for each customer.
+- شناسایی الگوهای پنهان در رفتار خرید مشتریان
+- گروه‌بندی مشتریان بر اساس ویژگی‌های رفتاری و ارزش خرید
+- شناسایی مشتریان در معرض ریزش
+- بررسی عوامل مرتبط با کاهش فعالیت مشتریان
+- پیشنهاد راهبردهای مناسب برای هر گروه رفتاری
+- اولویت‌بندی مشتریان برای اجرای کمپین حفظ مشتری
+- بررسی ارزش اقتصادی و اثربخشی احتمالی اقدامات پیشنهادی
 
-This creates several challenges:
+## 🧠 روش‌های داده‌کاوی
 
-- Which customers are becoming less active?
-- How can we distinguish normal purchasing gaps from potential churn?
-- Which behavioral patterns indicate an increased risk of losing a customer?
-- Can we predict churn before it happens?
-- Which customers should the business prioritize for retention campaigns?
-- How can transaction data be converted into practical business decisions?
+### ۱. Clustering — روش اصلی
 
-The project addresses these questions through data exploration, data preparation, feature engineering, supervised machine learning, and model evaluation.
+از خوشه‌بندی برای شناسایی گروه‌های رفتاری مشابه استفاده می‌کنیم. در این روش، از قبل برچسب مشخصی برای مشتریان نداریم و الگوریتم بر اساس شباهت ویژگی‌ها، آن‌ها را در گروه‌های مختلف قرار می‌دهد.
 
-## 🎯 Project Objectives
+الگوریتم اصلی این بخش:
 
-| Objective | Business Value |
-|---|---|
-| Analyze customer purchasing behavior | Understand how customers interact with the store |
-| Clean and validate transaction data | Improve the reliability of analytical results |
-| Identify churn-related behavioral patterns | Discover early warning signals |
-| Build a classification model | Estimate the probability of customer churn |
-| Evaluate predictive performance | Measure how reliably the model identifies at-risk customers |
-| Calculate customer risk scores | Compare customers by their estimated churn risk |
-| Prioritize the 500 highest-risk customers | Create a practical starting point for retention campaigns |
-| Translate predictions into business insights | Support data-driven customer retention decisions |
+- **K-Means**
 
-## 🗂️ Dataset
+برای انتخاب تعداد مناسب خوشه‌ها از روش‌هایی مانند Elbow و Silhouette استفاده می‌شود.
 
-**Dataset:** [Online Retail — UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/352/online+retail)
+هدف این بخش، شناخت انواع رفتار مشتریان و کمک به طراحی راهبرد مناسب برای هر گروه است.
 
-The project uses historical transactions from a UK-based online retail business. The dataset contains transaction-level information that can be transformed into customer-level behavioral features.
+### ۲. Classification — روش مکمل
 
-### Main attributes
+خوشه‌بندی به‌تنهایی نمی‌تواند مشخص کند کدام مشتری در آینده خرید خود را متوقف خواهد کرد. به همین دلیل، از Classification برای برآورد ریسک ریزش مشتریان نیز استفاده می‌کنیم.
 
-| Attribute | Description |
-|---|---|
-| `InvoiceNo` | Invoice identifier; may also indicate a cancellation |
-| `StockCode` | Product identifier |
-| `Description` | Product description |
-| `Quantity` | Number of units purchased; negative values may indicate returns |
-| `InvoiceDate` | Date and time of the transaction |
-| `UnitPrice` | Price per unit |
-| `CustomerID` | Customer identifier; may be missing |
-| `Country` | Customer's country |
+در این بخش، برچسب ریزش با بررسی رفتار خرید مشتری در ۹۰ روز آینده ساخته می‌شود.
 
-The original dataset does not directly provide a customer churn label. Therefore, a major part of the project is defining a measurable churn target from historical purchasing activity.
-
-*Note: The final usable columns, customer coverage, and record counts will be verified during data understanding and preparation.*
-
-## 🧠 Churn Definition & Prediction Strategy
-
-A machine learning model needs a clearly defined target. In this project, churn is operationally defined using a customer's purchasing activity after a reference date.
-
-### Proposed labeling strategy
-
-- **Observation window:** The 180 days preceding the reference date.
-- **Prediction window:** The 90 days following the reference date.
-- **Churned customer:** A customer who makes no new valid purchase during the 90-day prediction window.
-- **Active customer:** A customer who makes at least one valid purchase during that window.
-
-The reference date will be selected and validated based on the available transaction timeline.
-
-### Example
-
-Suppose the reference date is 1 January.
-
-- Customer A makes valid purchases during the next 90 days → **Active**
-- Customer B makes no valid purchases during the next 90 days → **Churned**
-
-The model uses only information available before the reference date to predict the outcome of the following 90 days.
-
-This separation is essential because using future purchasing information as an input feature would introduce **data leakage** and make the model's performance misleading.
-
-**Important:** This definition is a practical modeling assumption, not proof that a customer has permanently abandoned the store.
-
-## 🔬 Methodology — CRISP-DM
-
-The project follows the six phases of the CRISP-DM methodology, a structured framework for data-mining projects.
-
-### 1. Business Understanding
-
-**Purpose:** Define the business problem and translate it into measurable analytical objectives.
-
-Planned activities:
-
-- Define customer churn and the prediction horizon.
-- Identify business goals and project constraints.
-- Determine which customers and decisions the model should support.
-- Define success criteria for model evaluation.
-- Establish the objective of prioritizing the 500 highest-risk customers.
-
-**Deliverable:** A documented business problem, churn definition, and project success criteria.
-
-### 2. Data Understanding
-
-**Purpose:** Understand the structure, quality, and limitations of the transaction data.
-
-Planned activities:
-
-- Load the dataset and inspect its dimensions and columns.
-- Review data types and statistical summaries.
-- Measure missing values and duplicate records.
-- Analyze canceled invoices and returned products.
-- Investigate negative quantities and unusual prices.
-- Examine the distribution of transactions across customers and time.
-- Explore purchasing frequency, recency, monetary value, and customer activity.
-
-**Deliverable:** A data-quality assessment and an initial understanding of customer purchasing behavior.
-
-### 3. Data Preparation
-
-**Purpose:** Convert raw transaction records into a reliable customer-level modeling dataset.
-
-Planned activities:
-
-- Handle missing customer identifiers according to the analytical task.
-- Investigate duplicate records and inconsistent values.
-- Separate or appropriately handle canceled transactions and returns.
-- Validate quantities, prices, dates, and transaction identifiers.
-- Calculate valid purchase amounts.
-- Aggregate transaction-level records into customer-level features.
-- Create the churn target using the defined future observation window.
-- Check for data leakage and prepare the final modeling dataset.
-
-#### Planned feature engineering
-
-| Feature | Meaning |
-|---|---|
-| `Recency` | Days since the customer's most recent valid purchase before the reference date |
-| `Frequency` | Number of valid purchases or distinct purchase invoices |
-| `Monetary` | Total valid purchase value during the observation window |
-| `AverageOrderValue` | Average value of a valid purchase invoice |
-| `PurchaseInterval` | Typical time between purchases |
-| `UniqueProducts` | Number of distinct products purchased |
-| `ActiveDays` | Number of distinct days with valid purchases |
-| `Churn` | Target label derived from purchasing activity after the reference date |
-
-These are proposed features. Their final definitions and inclusion will depend on data validation and the modeling design.
-
-**Deliverable:** A clean, customer-level dataset containing predictive features and a clearly defined target.
-
-### 4. Modeling
-
-**Purpose:** Train machine learning models to classify customers according to their future churn risk.
-
-The main task is **supervised classification**, because the project constructs a target label from future purchasing behavior.
-
-Planned activities:
-
-- Separate predictive features from the target.
-- Split the data into training and testing sets using a time-aware strategy where feasible.
-- Establish a simple baseline.
-- Train and compare suitable classification algorithms.
-- Tune model parameters when justified.
-- Address class imbalance if it affects model performance.
-- Generate churn probabilities or risk scores for eligible customers.
-
-Potential algorithms include:
+الگوریتم‌های مورد بررسی:
 
 - Logistic Regression
 - Decision Tree
 - Random Forest
 - Gradient Boosting
 
-The final model will be selected based on evaluation results rather than assuming that one algorithm is always the best.
+**نکته:** خوشه‌های رفتاری لزوماً معادل گروه مشتریان ریزشی و غیرریزش‌یافته نیستند. این دو روش دو دیدگاه مکمل از رفتار مشتری ارائه می‌دهند.
 
-**Deliverable:** A trained classification model and customer-level churn risk scores.
+## 📊 دیتاست
 
-### 5. Evaluation
+داده‌های پروژه از دیتاست **Online Retail** تهیه شده‌اند که شامل تراکنش‌های یک فروشگاه آنلاین مستقر در بریتانیا است.
 
-**Purpose:** Determine whether the model is reliable and useful for the business objective.
+اطلاعات اصلی دیتاست:
 
-Planned evaluation methods:
-
-| Metric | Why it matters |
+| ستون | توضیحات |
 |---|---|
-| Precision | How many customers flagged as high-risk actually churned? |
-| Recall | How many churned customers did the model identify? |
-| F1-score | How well does the model balance precision and recall? |
-| ROC-AUC | How well does the model distinguish between the two classes across thresholds? |
-| PR-AUC | How effectively does the model identify the positive class, particularly when classes are imbalanced? |
-| Confusion Matrix | What types of classification errors does the model make? |
+| InvoiceNo | شماره فاکتور |
+| StockCode | شناسه محصول |
+| Description | توضیحات محصول |
+| Quantity | تعداد کالا |
+| InvoiceDate | تاریخ ثبت تراکنش |
+| UnitPrice | قیمت واحد |
+| CustomerID | شناسه مشتری |
+| Country | کشور مشتری |
 
-The evaluation will also consider the business cost of false positives and false negatives.
+**منبع دیتاست:** UCI Machine Learning Repository
 
-For example, failing to identify a customer who is about to churn may mean losing a retention opportunity, while incorrectly flagging an active customer may lead to unnecessary marketing expenditure.
+[دریافت دیتاست Online Retail](https://archive.ics.uci.edu/dataset/352/online+retail)
 
-**Deliverable:** A documented model comparison, evaluation results, and a justified model-selection decision.
+## 🔄 مسیر اجرای پروژه (CRISP-DM)
 
-### 6. Deployment
+پروژه بر اساس چارچوب CRISP-DM پیش می‌رود.
 
-**Purpose:** Turn the analytical results into a practical customer-retention workflow.
-
-Planned activities:
-
-- Apply the selected model to eligible customer records.
-- Calculate and rank customer churn risk scores.
-- Identify the 500 highest-risk customers, subject to sufficient eligible customer coverage.
-- Produce a structured output for business review.
-- Suggest retention actions based on observed customer behavior.
-- Document how the model could be integrated into a future business workflow.
-
-Possible retention actions include personalized offers, targeted reminders, loyalty incentives, and follow-up campaigns.
-
-**Deliverable:** A prioritized customer-risk list, actionable business recommendations, and a documented deployment approach.
-
-*Deployment in a live production environment is a future extension unless implemented as part of the project.*
-
-## 🛠️ Technology Stack
-
-| Tool | Purpose |
+| فاز | فعالیت‌ها |
 |---|---|
-| Python | Core programming language |
-| Pandas | Data cleaning, transformation, and aggregation |
-| NumPy | Numerical operations and data manipulation |
-| Matplotlib | Data visualization |
-| Seaborn | Statistical visualization |
-| Scikit-learn | Classification, preprocessing, model selection, and evaluation |
-| Jupyter Notebook | Interactive analysis, experimentation, and documentation |
-| Git & GitHub | Version control and project documentation |
+| **Business Understanding** | تعریف مسئله کسب‌وکار، تعیین اهداف، شناسایی ذی‌نفعان، KPIها، محدودیت‌ها و برنامه پروژه |
+| **Data Understanding** | بررسی ساختار دیتاست، شناخت ویژگی‌ها، تحلیل توزیع‌ها و شناسایی مشکلات داده |
+| **Data Preparation** | انتخاب ویژگی‌ها، پاک‌سازی و ممیزی داده، ساخت ویژگی‌های رفتاری، ایجاد برچسب ریزش و آماده‌سازی دیتاست |
+| **Modeling** | اجرای الگوریتم‌های خوشه‌بندی و طبقه‌بندی، تنظیم مدل‌ها و مقایسه نتایج |
 
-## 📊 Expected Outputs
+## 🧩 ویژگی‌های رفتاری (Feature Engineering)
 
-The project aims to produce the following analytical outputs:
-
-1. A structured analysis of transaction data quality.
-2. A cleaned and validated customer-level dataset.
-3. A reproducible churn-labeling procedure.
-4. An analysis of customer purchasing behavior and potential churn indicators.
-5. A comparison of classification models.
-6. An evaluation report with appropriate performance metrics.
-7. A churn risk score for each eligible customer.
-8. A ranked list of the 500 highest-risk customers, when sufficient eligible customers are available.
-9. Business recommendations for prioritizing customer-retention efforts.
-
-These are planned deliverables, not claims that all outputs have already been completed.
-
-## ⚠️ Key Challenges & Considerations
-
-### Data quality
-
-Canceled orders, product returns, missing customer IDs, duplicates, and unusual values can distort customer behavior metrics if they are not handled carefully.
-
-### No predefined churn label
-
-The target must be constructed from future purchasing activity, with a clear and consistent definition of a valid purchase.
-
-### Class imbalance
-
-If churned customers are relatively uncommon, accuracy alone may give a misleading impression of model quality.
-
-### Data leakage
-
-Features must be calculated using information available before the reference date. Future purchasing behavior must only be used to construct the target.
-
-### Temporal validation
-
-Customer behavior can change over time. A time-aware evaluation strategy is preferable when the dataset supports it.
-
-### Business usefulness
-
-A model with strong statistical performance is not automatically useful. The final system should help the business identify actionable customers and allocate retention resources more effectively.
-
-## 🚀 How to Run the Project
-
-### 1. Clone the repository
-
-```bash
-git clone <YOUR_REPOSITORY_URL>
-cd <YOUR_REPOSITORY_FOLDER>
-```
-
-Replace the placeholders with your actual GitHub repository URL and folder name.
-
-### 2. Create a virtual environment (recommended)
-
-```bash
-python -m venv .venv
-```
-
-Activate it on Windows:
-
-```bash
-.venv\Scripts\activate
-```
-
-### 3. Install dependencies
-
-If a `requirements.txt` file is available:
-
-```bash
-pip install -r requirements.txt
-```
-
-The planned core dependencies include:
-
-```text
-pandas
-numpy
-matplotlib
-seaborn
-scikit-learn
-jupyterlab
-```
-
-### 4. Open JupyterLab
-
-```bash
-jupyter lab
-```
-
-### 5. Load the dataset
-
-Update the file path to match the location of the CSV file in your local repository.
-
-```python
-import pandas as pd
-
-df = pd.read_csv("../OnlineRetail.csv")
-
-print(df.shape)
-print(df.head())
-print(df.info())
-```
-
-Continue with data understanding, preparation, feature engineering, modeling, and evaluation in the planned order.
-
-## 🗺️ Project Roadmap
-
-- [x] Define the business scenario and main objective.
-- [x] Select the initial dataset.
-- [x] Establish a preliminary churn definition.
-- [ ] Complete data understanding and quality assessment.
-- [ ] Clean and validate transaction records.
-- [ ] Engineer customer-level features.
-- [ ] Construct and validate the churn target.
-- [ ] Establish a baseline classification model.
-- [ ] Train and compare candidate algorithms.
-- [ ] Evaluate and select the final model.
-- [ ] Generate customer churn risk scores.
-- [ ] Prioritize the 500 highest-risk customers.
-- [ ] Document business recommendations.
-- [ ] Prepare the final analytical report.
-
-The checklist reflects the planned workflow and should be updated as each stage is completed and verified.
-
-## 🔮 Future Improvements
-
-Potential extensions after the core project include:
-
-- Explainable predictions using feature importance or SHAP.
-- More detailed customer segmentation.
-- Personalized retention strategies for different customer groups.
-- Cost-sensitive decision thresholds based on retention campaign budgets.
-- Time-based monitoring for changes in churn behavior.
-- A simple dashboard for exploring customer risk.
-- An automated pipeline for scoring new transaction data.
-
-These improvements are optional extensions and are not required for the initial classification objective.
-
-## 📚 References
-
-- **Dataset:** [UCI Machine Learning Repository — Online Retail](https://archive.ics.uci.edu/dataset/352/online+retail)
-- **Methodology:** [CRISP-DM — Cross-Industry Standard Process for Data Mining](https://www.ibm.com/docs/en/spss-modeler)
-- **Data Analysis:** [Pandas Documentation](https://pandas.pydata.org/docs/)
-- **Machine Learning:** [Scikit-learn Documentation](https://scikit-learn.org/stable/)
-
-
-
-# 🛒 پیش‌بینی ریزش مشتریان فروشگاه آنلاین
-### از تراکنش‌های خام تا هوشمندسازی حفظ مشتری
-
-<p align="center">
-  <img src="https://img.shields.io/badge/PROJECT-Data%20Mining-306998?style=for-the-badge&logo=databricks&logoColor=white" />
-  <img src="https://img.shields.io/badge/PYTHON-3.x-3776AB?style=for-the-badge&logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/WORKFLOW-CRISP--DM-7C3AED?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/STATUS-In%20Progress-F59E0B?style=for-the-badge" />
-</p>
-
-<p align="center">
-  <b>تبدیل داده‌های تراکنش مشتریان به بینش‌های کاربردی برای پیش‌بینی ریزش و بهبود حفظ مشتری</b>
-</p>
-
----
-
-## 📌 معرفی پروژه
-
-ریزش مشتری یکی از مهم‌ترین چالش‌های کسب‌وکارهای تجارت الکترونیک است. مشتریان ممکن است به‌تدریج تعداد خریدهای خود را کاهش دهند، فعالیت کمتری داشته باشند یا بدون هیچ هشدار مستقیمی، خرید از فروشگاه را متوقف کنند.
-
-از دست دادن مشتریان فعلی می‌تواند به معنای کاهش درآمدهای آینده و هدر رفتن بخشی از هزینه‌هایی باشد که کسب‌وکار برای جذب آن‌ها صرف کرده است.
-
-هدف این پروژه، توسعه یک سیستم داده‌محور برای تحلیل رفتار خرید مشتریان، شناسایی نشانه‌های اولیه ریزش و پیش‌بینی مشتریانی است که احتمال دارد در آینده خرید خود را متوقف کنند.
-
-در این پروژه صرفاً فروش‌های گذشته بررسی نمی‌شوند؛ بلکه تلاش می‌کنیم داده‌های خام تراکنش‌ها را به ویژگی‌های رفتاری در سطح مشتری، یک مدل طبقه‌بندی و یک سیستم اولویت‌بندی مشتریان بر اساس ریسک ریزش تبدیل کنیم تا نتایج به تصمیم‌های عملی کسب‌وکار کمک کنند.
-
-> **مأموریت اصلی:** شناسایی مشتریانی که در آستانه ریزش قرار دارند، پیش از آنکه کاهش فعالیت آن‌ها به یک مشکل بلندمدت برای کسب‌وکار تبدیل شود.
-
-## 🎯 مسئله کسب‌وکار
-
-فروشگاه به داده‌های تاریخی تراکنش‌های خود دسترسی دارد، اما برچسب مستقیمی که وضعیت ریزش هر مشتری را مشخص کند، در دیتاست وجود ندارد.
-
-این موضوع چند چالش اساسی ایجاد می‌کند:
-
-- کدام مشتریان به‌تدریج فعالیت خود را کاهش می‌دهند؟
-- چگونه می‌توان فاصله طبیعی بین خریدها را از نشانه‌های احتمالی ریزش تشخیص داد؟
-- چه الگوهای رفتاری نشان‌دهنده افزایش احتمال ریزش هستند؟
-- آیا می‌توان پیش از وقوع ریزش، آن را پیش‌بینی کرد؟
-- کدام مشتریان باید برای اجرای برنامه‌های حفظ مشتری در اولویت قرار بگیرند؟
-- چگونه می‌توان داده‌های تراکنش را به تصمیم‌های کاربردی کسب‌وکار تبدیل کرد؟
-
-این پروژه تلاش می‌کند با استفاده از تحلیل اکتشافی داده‌ها، آماده‌سازی داده، مهندسی ویژگی، یادگیری ماشین نظارت‌شده و ارزیابی مدل، به این پرسش‌ها پاسخ دهد.
-
-## 🎯 اهداف پروژه
-
-| هدف | ارزش برای کسب‌وکار |
-|---|---|
-| تحلیل رفتار خرید مشتریان | شناخت نحوه تعامل مشتریان با فروشگاه |
-| پاک‌سازی و اعتبارسنجی داده‌های تراکنش | افزایش قابلیت اعتماد نتایج تحلیلی |
-| شناسایی الگوهای مرتبط با ریزش | کشف نشانه‌های اولیه کاهش فعالیت مشتری |
-| ساخت مدل طبقه‌بندی | تخمین احتمال ریزش مشتریان |
-| ارزیابی عملکرد مدل | سنجش میزان موفقیت مدل در شناسایی مشتریان در معرض ریزش |
-| محاسبه امتیاز ریسک ریزش | مقایسه مشتریان بر اساس احتمال ریزش |
-| اولویت‌بندی ۵۰۰ مشتری با بالاترین ریسک | ایجاد نقطه شروعی برای اجرای برنامه‌های حفظ مشتری |
-| تبدیل پیش‌بینی‌ها به بینش‌های کسب‌وکار | پشتیبانی از تصمیم‌گیری مبتنی بر داده |
-
-## 🗂️ معرفی دیتاست
-
-**نام دیتاست:** [Online Retail — مخزن یادگیری ماشین دانشگاه کالیفرنیا، ارواین (UCI)](https://archive.ics.uci.edu/dataset/352/online+retail)
-
-این پروژه از داده‌های تاریخی تراکنش‌های یک کسب‌وکار خرده‌فروشی آنلاین مستقر در بریتانیا استفاده می‌کند. اطلاعات موجود در دیتاست در سطح تراکنش ثبت شده‌اند و می‌توان با پردازش آن‌ها، ویژگی‌های رفتاری مشتریان را استخراج کرد.
-
-### مهم‌ترین ویژگی‌های دیتاست
-
-| ویژگی | توضیح |
-|---|---|
-| `InvoiceNo` | شناسه فاکتور؛ برخی مقادیر می‌توانند نشان‌دهنده لغو سفارش باشند |
-| `StockCode` | شناسه محصول |
-| `Description` | توضیحات محصول |
-| `Quantity` | تعداد واحدهای خریداری‌شده؛ مقادیر منفی ممکن است نشان‌دهنده مرجوعی باشند |
-| `InvoiceDate` | تاریخ و زمان ثبت تراکنش |
-| `UnitPrice` | قیمت هر واحد محصول |
-| `CustomerID` | شناسه مشتری که ممکن است در برخی رکوردها خالی باشد |
-| `Country` | کشور مشتری |
-
-دیتاست اصلی برچسب مستقیمی برای ریزش مشتری ندارد. بنابراین، یکی از بخش‌های مهم پروژه، تعریف یک متغیر هدف قابل‌اندازه‌گیری بر اساس فعالیت خرید مشتریان در یک بازه زمانی آینده است.
-
-*توجه: تعداد نهایی رکوردها، ستون‌های قابل استفاده و تعداد مشتریان واجد شرایط، در مرحله شناخت و آماده‌سازی داده بررسی و تأیید خواهد شد.*
-
-## 🧠 تعریف ریزش مشتری و راهبرد پیش‌بینی
-
-برای آموزش یک مدل یادگیری ماشین، ابتدا باید متغیر هدف به‌صورت شفاف تعریف شود. در این پروژه، ریزش مشتری بر اساس فعالیت خرید او پس از یک تاریخ مرجع مشخص می‌شود.
-
-### راهبرد پیشنهادی برای تعیین برچسب
-
-- **بازه مشاهده:** ۱۸۰ روز پیش از تاریخ مرجع.
-- **بازه پیش‌بینی:** ۹۰ روز پس از تاریخ مرجع.
-- **مشتری دچار ریزش:** مشتری‌ای که طی بازه ۹۰ روزه پیش‌بینی، هیچ خرید معتبر جدیدی انجام ندهد.
-- **مشتری فعال:** مشتری‌ای که در این بازه حداقل یک خرید معتبر انجام دهد.
-
-تاریخ مرجع بر اساس محدوده زمانی موجود در دیتاست انتخاب و اعتبارسنجی خواهد شد.
-
-### مثال
-
-فرض کنیم تاریخ مرجع، اول ژانویه باشد.
-
-- مشتری A در ۹۰ روز آینده خرید معتبر انجام می‌دهد ← **فعال**
-- مشتری B در ۹۰ روز آینده هیچ خرید معتبری انجام نمی‌دهد ← **دچار ریزش**
-
-مدل فقط از اطلاعات موجود پیش از تاریخ مرجع استفاده می‌کند تا وضعیت خرید مشتری را در بازه آینده پیش‌بینی کند.
-
-این جداسازی اهمیت زیادی دارد؛ زیرا استفاده از اطلاعات آینده در ویژگی‌های ورودی باعث **نشت اطلاعات (Data Leakage)** می‌شود و می‌تواند عملکرد مدل را به‌شکل غیرواقعی بهتر نشان دهد.
-
-**نکته مهم:** این تعریف، یک فرض عملیاتی برای مدل‌سازی است و لزوماً ثابت نمی‌کند که مشتری برای همیشه فروشگاه را ترک کرده است.
-
-## 🔬 روش‌شناسی پروژه — CRISP-DM
-
-این پروژه بر اساس شش مرحله روش‌شناسی CRISP-DM پیش می‌رود؛ چارچوبی استاندارد برای اجرای منظم پروژه‌های داده‌کاوی.
-
-### ۱. شناخت کسب‌وکار (Business Understanding)
-
-**هدف:** تعریف مسئله کسب‌وکار و تبدیل آن به اهداف تحلیلی قابل‌اندازه‌گیری.
-
-فعالیت‌های برنامه‌ریزی‌شده:
-
-- تعریف ریزش مشتری و بازه زمانی پیش‌بینی.
-- تعیین اهداف تجاری و محدودیت‌های پروژه.
-- مشخص کردن مشتریان هدف و تصمیم‌هایی که مدل باید از آن‌ها پشتیبانی کند.
-- تعریف معیارهای موفقیت مدل.
-- تعیین هدف اولویت‌بندی ۵۰۰ مشتری با بالاترین ریسک ریزش.
-
-**خروجی:** مستندسازی مسئله کسب‌وکار، تعریف ریزش مشتری و معیارهای موفقیت پروژه.
-
-### ۲. شناخت داده‌ها (Data Understanding)
-
-**هدف:** شناخت ساختار، کیفیت و محدودیت‌های داده‌های تراکنش.
-
-فعالیت‌های برنامه‌ریزی‌شده:
-
-- بارگذاری دیتاست و بررسی ابعاد و ستون‌های آن.
-- بررسی نوع داده‌ها و آمارهای توصیفی.
-- اندازه‌گیری مقادیر گمشده و رکوردهای تکراری.
-- تحلیل فاکتورهای لغوشده و محصولات مرجوعی.
-- بررسی مقادیر منفی در تعداد محصولات و قیمت‌های غیرعادی.
-- بررسی توزیع تراکنش‌ها بین مشتریان و در طول زمان.
-- تحلیل تعداد دفعات خرید، تازگی خرید، ارزش خرید و میزان فعالیت مشتریان.
-
-**خروجی:** گزارش کیفیت داده‌ها و شناخت اولیه رفتار خرید مشتریان.
-
-### ۳. آماده‌سازی داده‌ها (Data Preparation)
-
-**هدف:** تبدیل داده‌های خام تراکنش به یک مجموعه داده معتبر در سطح مشتری برای مدل‌سازی.
-
-فعالیت‌های برنامه‌ریزی‌شده:
-
-- مدیریت شناسه‌های گمشده مشتری بر اساس هدف تحلیل.
-- بررسی رکوردهای تکراری و مقادیر ناسازگار.
-- جداسازی یا مدیریت مناسب تراکنش‌های لغوشده و مرجوعی‌ها.
-- اعتبارسنجی تعداد محصولات، قیمت‌ها، تاریخ‌ها و شناسه تراکنش‌ها.
-- محاسبه ارزش خرید معتبر.
-- تجمیع تراکنش‌ها و تبدیل آن‌ها به ویژگی‌های سطح مشتری.
-- ایجاد برچسب ریزش با استفاده از بازه زمانی آینده.
-- بررسی نشت اطلاعات و آماده‌سازی دیتاست نهایی برای مدل‌سازی.
-
-#### مهندسی ویژگی‌های پیشنهادی
+برای تبدیل داده‌های خام تراکنشی به اطلاعات قابل‌استفاده در تحلیل رفتار مشتریان، ویژگی‌های مختلفی ساخته می‌شوند.
 
 | ویژگی | مفهوم |
 |---|---|
-| `Recency` | تعداد روزهای گذشته از آخرین خرید معتبر مشتری تا تاریخ مرجع |
-| `Frequency` | تعداد خریدهای معتبر یا تعداد فاکتورهای خرید متمایز |
-| `Monetary` | مجموع ارزش خرید معتبر مشتری در بازه مشاهده |
-| `AverageOrderValue` | میانگین ارزش هر فاکتور خرید معتبر |
-| `PurchaseInterval` | فاصله زمانی معمول بین خریدهای مشتری |
-| `UniqueProducts` | تعداد محصولات متمایزی که مشتری خریداری کرده است |
-| `ActiveDays` | تعداد روزهای متمایزی که مشتری در آن‌ها خرید معتبر داشته است |
-| `Churn` | برچسب هدف که بر اساس فعالیت خرید در بازه آینده تعیین می‌شود |
+| Recency | فاصله زمانی از آخرین خرید مشتری |
+| Frequency | تعداد خریدهای مشتری |
+| Monetary | مجموع ارزش خرید مشتری |
+| Average Order Value | میانگین ارزش هر سفارش |
+| Unique Products | تعداد محصولات منحصربه‌فرد خریداری‌شده |
+| Active Days | تعداد روزهایی که مشتری خرید داشته است |
+| Active Months | تعداد ماه‌های دارای خرید |
+| Purchase Interval | میانگین فاصله زمانی بین خریدها |
+| Tenure | مدت‌زمان سابقه مشتری |
+| Frequency Change | تغییر تعداد خرید در بازه‌های زمانی |
+| Spend Change | تغییر میزان هزینه‌کرد مشتری |
+| Cancel Rate | نرخ فاکتورهای لغو یا مرجوعی |
 
-این ویژگی‌ها در مرحله طراحی اولیه پیشنهاد شده‌اند و تعریف نهایی و استفاده از هرکدام به اعتبارسنجی داده‌ها و طراحی مدل بستگی خواهد داشت.
+این ویژگی‌ها به ما کمک می‌کنند مشتریان را از نظر ارزش خرید، نظم خرید، تنوع محصولات و تغییر رفتار بررسی کنیم.
 
-**خروجی:** یک دیتاست پاک‌سازی‌شده در سطح مشتری، شامل ویژگی‌های پیش‌بینی و متغیر هدف مشخص.
+## ⚙️ فناوری‌ها و ابزارهای مورد استفاده
 
-### ۴. مدل‌سازی (Modeling)
+| ابزار | کاربرد |
+|---|---|
+| Python | زبان اصلی برنامه‌نویسی |
+| NumPy | محاسبات عددی و عملیات آرایه‌ای |
+| Pandas | پردازش و تحلیل داده‌ها |
+| Matplotlib | رسم نمودارها |
+| Seaborn | مصورسازی و تحلیل توزیع‌ها |
+| Scikit-learn | پیاده‌سازی و ارزیابی الگوریتم‌های یادگیری ماشین |
+| Jupyter Notebook | محیط توسعه و مستندسازی |
+| Git & GitHub | مدیریت نسخه و نگهداری پروژه |
 
-**هدف:** آموزش مدل‌های یادگیری ماشین
+## 📈 ارزیابی مدل‌ها
+
+### ارزیابی Clustering
+
+برای بررسی کیفیت خوشه‌بندی از معیارهای زیر استفاده می‌شود:
+
+- **Silhouette Score:** بررسی میزان تفکیک و انسجام خوشه‌ها
+- **Davies-Bouldin Index:** بررسی شباهت و پراکندگی خوشه‌ها
+- **Calinski-Harabasz Index:** بررسی نسبت پراکندگی بین خوشه‌ها به پراکندگی درون آن‌ها
+- **Behavioral Interpretation:** بررسی معنا و ارزش تجاری هر خوشه
+
+### ارزیابی Classification
+
+برای بررسی عملکرد مدل‌های پیش‌بینی از معیارهای زیر استفاده می‌شود:
+
+- Precision
+- Recall
+- F1-score
+- PR-AUC
+- ROC-AUC
+- Confusion Matrix
+- Precision@500
+
+با توجه به محدودیت ظرفیت کمپین، شناسایی مشتریان پرریسک در میان ۵۰۰ مشتری اول اهمیت ویژه‌ای دارد.
+
+## 💼 خروجی مورد انتظار پروژه
+
+در نهایت، هدف این است که با ترکیب نتایج خوشه‌بندی و پیش‌بینی ریسک، اطلاعات قابل‌استفاده‌ای برای تصمیم‌گیری کسب‌وکار فراهم شود.
+
+خروجی‌های مورد انتظار:
+
+1. گروه‌های رفتاری مشتریان همراه با تفسیر ویژگی‌های هر گروه
+2. شناسایی مشتریان در معرض ریزش
+3. رتبه‌بندی مشتریان بر اساس ریسک
+4. پیشنهاد اقدام مناسب برای هر گروه رفتاری
+5. فهرست ۵۰۰ مشتری اولویت‌دار برای کمپین حفظ مشتری
+6. تحلیل اقتصادی کمپین و بررسی فرضیات مالی
+
+## ⚠️ ملاحظات و محدودیت‌ها
+
+- دیتاست فاقد برچسب آماده برای ریزش مشتری است؛ بنابراین برچسب باید با استفاده از رفتار خرید آینده ساخته شود.
+- تراکنش‌های لغوشده، مرجوعی‌ها و مقادیر منفی باید پیش از محاسبه رفتار مشتری بررسی شوند.
+- اطلاعات ناقص مشتریان می‌تواند بر تحلیل مشتری‌محور اثر بگذارد.
+- ویژگی‌های مدل باید فقط از اطلاعات موجود پیش از تاریخ مرجع ساخته شوند تا از Data Leakage جلوگیری شود.
+- ارزیابی مدل باید با توجه به ترتیب زمانی داده‌ها انجام شود.
+- شناسایی ارتباط بین یک ویژگی و ریزش، به‌تنهایی به معنی اثبات رابطه علت و معلولی نیست.
+- اثربخشی واقعی کمپین حفظ مشتری نیازمند اجرای آزمایش‌هایی مانند A/B Testing است.
+
+</div>
+
+
+## 🚀 Project Roadmap
+
+- [x] Business Understanding
+- [x] Data Understanding
+- [x] Data Preparation
+  - [x] Data Selection
+  - [x] Data Cleaning
+  - [x] Data Construction
+  - [x] Data Integration
+  - [x] Data Formatting
+  - [x] Data Reduction
+  - [x] Data Transformation
+  - [x] Dataset Validation
+- [x] Modeling
+  - [x] Customer Behavioral Clustering
+  - [x] Optimal Number of Clusters
+  - [x] Cluster Interpretation
+  - [x] Churn Classification
+  - [x] Model Comparison
+  - [x] Temporal Evaluation
+  - [x] Customer Prioritization
+  - [x] Campaign Analysis
+
+## 📚 References
+
+- [UCI Machine Learning Repository — Online Retail](https://archive.ics.uci.edu/dataset/352/online+retail)
+- [CRISP-DM Methodology](https://www.ibm.com/docs/en/spss-modeler)
+- [Pandas Documentation](https://pandas.pydata.org/docs/)
+- [NumPy Documentation](https://numpy.org/doc/)
+- [Scikit-learn Documentation](https://scikit-learn.org/stable/)
+
 ---
 
-<p align="center">
-  <b>Built with Python, driven by data, focused on customer retention.</b>
-  <br>
-  <sub>A practical data-mining project connecting customer behavior analysis with predictive machine learning.</sub>
-</p>
+<div align="center">
+
+**Developed as a Data Mining Project**
+
+</div>
