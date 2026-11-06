@@ -1,0 +1,6 @@
+record_status,Rows,Percent,Decision
+valid_sale,391151,72.89,Keep: valid purchase
+no_customer_id,135037,25.16,Exclude from customer-level modeling
+cancellation_return,8506,1.59,Keep separately: cancellation rate only
+non_product,1911,0.36,"Exclude: postage, fees, manual discounts"
+bad_price,34,0.01,Exclude: zero or negative price
